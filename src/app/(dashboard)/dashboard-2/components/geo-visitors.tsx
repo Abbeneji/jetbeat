@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import {
   ComposableMap,
   Geographies,
@@ -64,6 +64,9 @@ export function GeoVisitorsMap() {
     visitors: number;
   } | null>(null);
 
+  // Ref for map container
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+
   // Aggregate totals per numeric ID
   const { totalsByNumericId, minCount, maxCount } = useMemo(() => {
     const totals: Record<string, number> = {};
@@ -104,7 +107,7 @@ export function GeoVisitorsMap() {
           <CardDescription>Where visitors are coming from</CardDescription>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[300px] w-full" />
+          <Skeleton className="h-[450px] w-full" />
         </CardContent>
       </Card>
     );
@@ -120,16 +123,17 @@ export function GeoVisitorsMap() {
       <CardContent>
         {/* MAP WRAPPER */}
         <div
-  className="rounded-xl h-[300px] border relative"
-  style={{ backgroundColor: "#17181c" }}
->
+          ref={mapContainerRef}
+          className="rounded-xl h-[450px] border relative"
+          style={{ backgroundColor: "#17181c" }}
+        >
           {/* TOOLTIP */}
           {tooltip && (
             <div
               className="absolute px-3 py-2 rounded-md bg-black/80 text-white text-xs shadow-md pointer-events-none"
               style={{
-                top: tooltip.y + 10,
-                left: tooltip.x + 10,
+                top: tooltip.y,
+                left: tooltip.x,
                 zIndex: 50,
               }}
             >
@@ -141,7 +145,7 @@ export function GeoVisitorsMap() {
           <ComposableMap
             projectionConfig={{ scale: 145 }}
             width={800}
-            height={300}
+            height={450}
             style={{ width: "100%", height: "100%" }}
           >
             <ZoomableGroup zoom={zoom} center={[10, 30]}>
@@ -159,10 +163,16 @@ export function GeoVisitorsMap() {
                         key={geo.rsmKey}
                         geography={geo}
                         onMouseMove={(event) => {
-                          if (!alpha2) return;
+                          if (!alpha2 || !mapContainerRef.current) return;
+
+                          const rect =
+                            mapContainerRef.current.getBoundingClientRect();
+                          const x = event.clientX - rect.left;
+                          const y = event.clientY - rect.top;
+
                           setTooltip({
-                            x: event.clientX,
-                            y: event.clientY - 70,
+                            x: x + 10,
+                            y: y + 10,
                             country: COUNTRY_LABELS[alpha2] ?? alpha2,
                             visitors,
                           });
@@ -194,17 +204,59 @@ export function GeoVisitorsMap() {
           </ComposableMap>
         </div>
 
-        {/* COUNTRY LIST UNDER MAP */}
-        <div className="mt-3 space-y-1">
-          {safeGeo.map((c: any, i: number) => (
-            <div
-              key={i}
-              className="flex justify-between text-xs text-muted-foreground"
-            >
-              <span>{normalize(c.country)}</span>
-              <span>{c.count} visitors</span>
-            </div>
-          ))}
+        {/* COUNTRY LIST WITH NEW % BARS */}
+        <div className="mt-4 space-y-3">
+          {safeGeo.slice(0, 5).map((c: any, i: number) => {
+            const totalVisitors = safeGeo.reduce(
+              (sum: number, country: any) => sum + (country.count || 0),
+              0
+            );
+            const pct =
+              totalVisitors > 0 ? (c.count / totalVisitors) * 100 : 0;
+
+            const countryName =
+              COUNTRY_LABELS[normalize(c.country) || ""] ||
+              normalize(c.country) ||
+              c.country;
+
+            return (
+              <div
+                key={i}
+                className="flex items-center p-3 rounded-lg border gap-2"
+              >
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                  #{i + 1}
+                </div>
+
+                <div className="flex gap-4 items-center justify-between flex-1 flex-wrap">
+                  <div>
+                    <p className="text-sm font-medium truncate max-w-[200px]">
+                      {countryName}
+                    </p>
+                    <span className="text-xs text-muted-foreground">
+                      {c.count} visitors
+                    </span>
+                  </div>
+
+                  {/* Upgraded gradient percentage bar */}
+                  <div className="flex items-center gap-3 min-w-[140px]">
+                    <div className="flex-1">
+                      <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500 ease-out"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <span className="text-xs text-muted-foreground w-12 text-right">
+                      {pct.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

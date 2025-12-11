@@ -10,7 +10,7 @@ export default function FAQsPage() {
   return (
     <div className="px-4 lg:px-6">
       <FAQList faqs={faqsData} categories={categoriesData} />
-      <FeaturesGrid features={featuresData} />
+      {/* <FeaturesGrid features={featuresData} /> */}
     </div>
   )
 }

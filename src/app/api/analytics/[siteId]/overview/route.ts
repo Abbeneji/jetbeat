@@ -27,10 +27,54 @@ export async function GET(
       return NextResponse.json({ error: 'Site not found' }, { status: 404 })
     }
 
-    // Get date range from query params (default: last 30 days)
+    // ============================================
+    // 🔧 FIX: Handle 'range' parameter from frontend
+    // ============================================
     const searchParams = request.nextUrl.searchParams
-    const from = searchParams.get('from') || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    const to = searchParams.get('to') || new Date().toISOString().split('T')[0]
+    const range = searchParams.get('range') || '30d' // Get the range parameter
+    
+    // Convert range to days
+    const daysMap: Record<string, number> = {
+      '7d': 7,
+      '30d': 30,
+      '90d': 90,
+      '365d': 365,
+    }
+    const rangeDays = daysMap[range] || 30
+
+    // Calculate date range based on 'range' parameter
+    const toDate = new Date() // Now
+    const fromDate = new Date()
+    fromDate.setDate(fromDate.getDate() - rangeDays)
+
+    // Format dates
+    const from = fromDate.toISOString().split('T')[0]
+    const to = toDate.toISOString().split('T')[0]
+    // ============================================
+
+    const DAY_MS = 24 * 60 * 60 * 1000
+    const parseDate = (date: string) => new Date(`${date}T00:00:00`)
+    const parsedFromDate = parseDate(from)
+    const parsedToDate = new Date(`${to}T23:59:59`)
+
+    const actualRangeDays = Math.max(1, Math.round((parsedToDate.getTime() - parsedFromDate.getTime()) / DAY_MS) + 1)
+
+    // Previous period uses the same length right before the current range
+    const prevPeriodEnd = new Date(parsedFromDate.getTime() - DAY_MS)
+    const prevPeriodStart = new Date(prevPeriodEnd.getTime() - (actualRangeDays - 1) * DAY_MS)
+
+    const formatRangeDate = (date: Date, endOfDay = false) =>
+      `${date.toISOString().split('T')[0]}${endOfDay ? 'T23:59:59' : 'T00:00:00'}`
+
+    const currentRange = {
+      from: formatRangeDate(parsedFromDate),
+      to: formatRangeDate(parsedToDate, true),
+    }
+
+    const previousRange = {
+      from: formatRangeDate(prevPeriodStart),
+      to: formatRangeDate(prevPeriodEnd, true),
+    }
 
     // Live visitors (last 5 minutes)
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
@@ -40,45 +84,64 @@ export async function GET(
       .eq('site_id', siteId)
       .gte('timestamp', fiveMinutesAgo)
 
-    // Total unique visitors in date range
-    const { data: visitorsData } = await supabaseAdmin
-      .from('pageviews')
-      .select('visitor_hash')
-      .eq('site_id', siteId)
-      .gte('timestamp', `${from}T00:00:00`)
-      .lte('timestamp', `${to}T23:59:59`)
+    const fetchRangeStats = async (range: { from: string; to: string }) => {
+      // Total unique visitors in date range
+      const { data: visitorsData } = await supabaseAdmin
+        .from('pageviews')
+        .select('visitor_hash')
+        .eq('site_id', siteId)
+        .gte('timestamp', range.from)
+        .lte('timestamp', range.to)
 
-    const uniqueVisitors = new Set(visitorsData?.map(p => p.visitor_hash)).size
+      const uniqueVisitors = new Set(visitorsData?.map(p => p.visitor_hash)).size
 
-    // Total sessions in date range
-    const { data: sessionsData } = await supabaseAdmin
-      .from('pageviews')
-      .select('session_id')
-      .eq('site_id', siteId)
-      .gte('timestamp', `${from}T00:00:00`)
-      .lte('timestamp', `${to}T23:59:59`)
+      // Total sessions in date range
+      const { data: sessionsData } = await supabaseAdmin
+        .from('pageviews')
+        .select('session_id')
+        .eq('site_id', siteId)
+        .gte('timestamp', range.from)
+        .lte('timestamp', range.to)
 
-    const totalSessions = new Set(sessionsData?.map(p => p.session_id)).size
+      const totalSessions = new Set(sessionsData?.map(p => p.session_id)).size
 
-    // Average duration
-    const { data: durationData } = await supabaseAdmin
-      .from('pageviews')
-      .select('duration')
-      .eq('site_id', siteId)
-      .gte('timestamp', `${from}T00:00:00`)
-      .lte('timestamp', `${to}T23:59:59`)
+      // Average duration
+      const { data: durationData } = await supabaseAdmin
+        .from('pageviews')
+        .select('duration')
+        .eq('site_id', siteId)
+        .gte('timestamp', range.from)
+        .lte('timestamp', range.to)
 
-    const avgDuration = durationData?.length
-      ? Math.round(durationData.reduce((sum, p) => sum + (p.duration || 0), 0) / durationData.length)
-      : 0
+      const avgDuration = durationData?.length
+        ? Math.round(durationData.reduce((sum, p) => sum + (p.duration || 0), 0) / durationData.length)
+        : 0
+
+      return {
+        total_visitors: uniqueVisitors,
+        total_sessions: totalSessions,
+        avg_duration: avgDuration,
+      }
+    }
+
+    const calculateChange = (current: number, previous: number) => {
+      if (!previous) return null
+      const delta = ((current - previous) / previous) * 100
+      return Math.round(delta * 10) / 10
+    }
+
+    const [currentStats, previousStats] = await Promise.all([
+      fetchRangeStats(currentRange),
+      fetchRangeStats(previousRange),
+    ])
 
     // Graph data (visitors per day)
     const { data: graphData } = await supabaseAdmin
       .from('pageviews')
       .select('timestamp, visitor_hash')
       .eq('site_id', siteId)
-      .gte('timestamp', `${from}T00:00:00`)
-      .lte('timestamp', `${to}T23:59:59`)
+      .gte('timestamp', currentRange.from)
+      .lte('timestamp', currentRange.to)
       .order('timestamp', { ascending: true })
 
     // Group by date
@@ -96,9 +159,13 @@ export async function GET(
 
     return NextResponse.json({
       live_visitors: liveVisitors || 0,
-      total_visitors: uniqueVisitors,
-      total_sessions: totalSessions,
-      avg_duration: avgDuration,
+      ...currentStats,
+      previous: previousStats,
+      changes: {
+        total_visitors: calculateChange(currentStats.total_visitors, previousStats.total_visitors),
+        total_sessions: calculateChange(currentStats.total_sessions, previousStats.total_sessions),
+        avg_duration: calculateChange(currentStats.avg_duration, previousStats.avg_duration),
+      },
       graph
     })
   } catch (error) {

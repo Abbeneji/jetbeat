@@ -7,14 +7,13 @@ import { AnalyticsProvider, useAnalyticsContext } from "@/contexts/analytics-con
 
 import { MetricsOverview } from "./components/metrics-overview"
 import { SalesChart } from "./components/sales-chart"
-import { RecentTransactions } from "./components/recent-transactions"
-import { TopProducts } from "./components/top-products"
-import { CustomerInsights } from "./components/customer-insights"
-import { QuickActions } from "./components/quick-actions"
 import { RevenueBreakdown } from "./components/revenue-breakdown"
 import { GeoVisitorsMap } from "./components/geo-visitors"
 import { ReferrersCard } from "./components/referrers-card"
 import { TopPages } from "./components/top-pages"
+import { QuickActions } from "./components/quick-actions"
+import { DateRangeSelector } from "./components/date-range-selector"
+
 
 export default function Dashboard2() {
   return (
@@ -33,6 +32,8 @@ function DashboardShell() {
     setSelectedSiteId,
     overview,
     loading,
+    timeRange,
+    setTimeRange,
   } = useAnalyticsContext()
 
   const [authChecked, setAuthChecked] = useState(false)
@@ -50,7 +51,7 @@ function DashboardShell() {
   }, [router])
 
   // -------------------------------------------------
-  // 2. AUTO-SELECT FIRST SITE (FIX FOR THE ERROR)
+  // 2. AUTO-SELECT FIRST SITE
   // -------------------------------------------------
   useEffect(() => {
     if (!sitesLoading && sites && sites.length > 0 && !selectedSiteId) {
@@ -59,7 +60,7 @@ function DashboardShell() {
   }, [sites, sitesLoading, selectedSiteId, setSelectedSiteId])
 
   // -------------------------------------------------
-  // 3. LOADING STATES (KEEP ORIGINAL SKELETONS)
+  // 3. LOADING STATES
   // -------------------------------------------------
   if (!authChecked || sitesLoading || (!selectedSiteId && sites.length > 0)) {
     return <DashboardSkeletonOriginal />
@@ -80,7 +81,7 @@ function DashboardShell() {
   }
 
   // -------------------------------------------------
-  // 5. CORRECTED "NO DATA YET" CONDITION
+  // 5. NO DATA YET CONDITION
   // -------------------------------------------------
   const showNoDataBanner =
     !loading &&
@@ -90,7 +91,7 @@ function DashboardShell() {
       overview.totalPageviews === 0)
 
   // -------------------------------------------------
-  // 6. RENDER DASHBOARD (UNCHANGED)
+  // 6. RENDER DASHBOARD
   // -------------------------------------------------
   return (
     <div className="flex-1 space-y-6 px-6 pt-0">
@@ -110,7 +111,15 @@ function DashboardShell() {
             Monitor your web performance and key metrics in real-time
           </p>
         </div>
-        <QuickActions />
+        
+        {/* DATE RANGE SELECTOR + QUICK ACTIONS */}
+        <div className="flex items-center gap-3">
+          <DateRangeSelector 
+            value={timeRange}
+            onChange={setTimeRange}
+          />
+          <QuickActions />
+        </div>
       </div>
 
       <div className="@container/main space-y-6">
@@ -133,7 +142,7 @@ function DashboardShell() {
 }
 
 /* ---------------------------------------------------
-   Your ORIGINAL skeleton layout (unchanged)
+   SKELETON LOADING STATE
 --------------------------------------------------- */
 function DashboardSkeletonOriginal() {
   return (

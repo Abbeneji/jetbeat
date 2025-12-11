@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -15,7 +16,26 @@ export default function DashboardLayout({
 }) {
   const [themeCustomizerOpen, setThemeCustomizerOpen] = React.useState(false);
   const { config } = useSidebarConfig();
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = React.useState(false);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
 
+  React.useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+    if (!token) {
+      router.replace("/sign-in-2");
+      return;
+    }
+
+    setIsAuthenticated(true);
+    setAuthChecked(true);
+  }, [router]);
+
+  if (!authChecked && !isAuthenticated) {
+    return null;
+  }
+  
   return (
     <SidebarProvider
       style={{
@@ -65,13 +85,13 @@ export default function DashboardLayout({
         </>
       )}
 
-      {/* Theme Customizer */}
+      {/* Theme Customizer 
       <ThemeCustomizerTrigger onClick={() => setThemeCustomizerOpen(true)} />
       <ThemeCustomizer
         open={themeCustomizerOpen}
         onOpenChange={setThemeCustomizerOpen}
       />
-
+          */}
     </SidebarProvider>
   );
 }

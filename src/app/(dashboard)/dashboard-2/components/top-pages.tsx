@@ -1,17 +1,14 @@
 "use client"
 
-import { Eye, FileText } from "lucide-react"
+import { Eye } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { useAnalytics } from "@/hooks/use-analytics"
 import { useAnalyticsContext } from "@/contexts/analytics-context"
 
 export function TopPages() {
   const { selectedSiteId } = useAnalyticsContext()
 
-  // Fetch top pages for the active site
   const { topPages, loading } = useAnalytics(selectedSiteId)
 
   const pages = topPages || []
@@ -24,6 +21,7 @@ export function TopPages() {
           <CardTitle>Top Pages</CardTitle>
           <CardDescription>Most visited pages on your website</CardDescription>
         </div>
+
         <Button variant="outline" size="sm" className="cursor-pointer">
           <Eye className="h-4 w-4 mr-2" />
           View All
@@ -31,9 +29,7 @@ export function TopPages() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {loading && (
-          <p className="text-muted-foreground text-sm">Loading...</p>
-        )}
+        {loading && <p className="text-muted-foreground text-sm">Loading...</p>}
 
         {!loading && topFive.length === 0 && (
           <p className="text-muted-foreground text-sm">No pageview data yet</p>
@@ -41,31 +37,35 @@ export function TopPages() {
 
         {topFive.map((page, index) => (
           <div key={page.page_url + index} className="flex items-center p-3 rounded-lg border gap-2">
+            {/* Rank bubble */}
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
               #{index + 1}
             </div>
 
-            <div className="flex gap-2 items-center justify-between space-x-3 flex-1 flex-wrap">
+            <div className="flex gap-4 items-center justify-between flex-1 flex-wrap">
+              {/* Page info */}
               <div>
-                <div className="flex items-center space-x-2">
-                  <p className="text-sm font-medium truncate max-w-[200px]">
-                    {page.page_url}
-                  </p>
-                  {/* <Badge variant="outline" className="text-xs flex items-center gap-1">
-                    <FileText className="w-3 h-3" />
-                    Page
-                  </Badge> */}
-                </div>
-
+                <p className="text-sm font-medium truncate max-w-[200px]">
+                  {page.page_url}
+                </p>
                 <span className="text-xs text-muted-foreground">
                   {page.count} visits
                 </span>
               </div>
 
-              <div className="text-right space-y-1">
-                <Progress value={page.percentage} className="w-20 h-1" />
-                <span className="text-xs text-muted-foreground">
-                  {page.percentage.toFixed(1)}% of traffic
+              {/* Upgraded Percentage Bar (same styling as ReferrersCard) */}
+              <div className="flex items-center gap-3 min-w-[140px]">
+                <div className="flex-1">
+                  <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500 ease-out"
+                      style={{ width: `${page.percentage}%` }}
+                    />
+                  </div>
+                </div>
+
+                <span className="text-xs text-muted-foreground w-12 text-right">
+                  {page.percentage.toFixed(1)}%
                 </span>
               </div>
             </div>

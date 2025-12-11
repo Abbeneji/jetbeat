@@ -7,6 +7,16 @@ export interface OverviewData {
   total_visitors: number
   total_sessions: number
   avg_duration: number
+  previous?: {
+    total_visitors: number | null
+    total_sessions: number | null
+    avg_duration: number | null
+  }
+  changes?: {
+    total_visitors: number | null
+    total_sessions: number | null
+    avg_duration: number | null
+  }
   graph: { date: string; visitors: number }[]
 }
 
@@ -34,7 +44,7 @@ export function useAnalytics(
   const [overview, setOverview] = useState<OverviewData | null>(null)
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [geo, setGeo] = useState<GeoLocation[]>([])
-  const [topPages, setTopPages] = useState<PageView[]>([]) // ✅ NEW
+  const [topPages, setTopPages] = useState<PageView[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -60,19 +70,17 @@ export function useAnalytics(
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      // -------------------------------------------------------------
-      // 🔥 Fetch ALL analytics endpoints in parallel (added pages)
-      // -------------------------------------------------------------
+      // Fetch ALL analytics endpoints in parallel
       const [
         overviewRes,
         referralsRes,
         geoRes,
-        pagesRes // ✅ NEW
+        pagesRes
       ] = await Promise.all([
         fetch(`/api/analytics/${siteId}/overview?range=${range}`, { headers }),
         fetch(`/api/analytics/${siteId}/referrals?range=${range}`, { headers }),
         fetch(`/api/analytics/${siteId}/geo?range=${range}`, { headers }),
-        fetch(`/api/analytics/${siteId}/pages?range=${range}`, { headers }) // ✅ NEW
+        fetch(`/api/analytics/${siteId}/pages?range=${range}`, { headers })
       ])
 
       if (!overviewRes.ok || !referralsRes.ok || !geoRes.ok || !pagesRes.ok) {
@@ -87,9 +95,7 @@ export function useAnalytics(
           pagesRes.json(),
         ])
 
-      // -------------------------------------------------------------
       // APPLY RESULTS
-      // -------------------------------------------------------------
       setOverview(overviewData)
 
       setReferrals(
@@ -126,7 +132,7 @@ export function useAnalytics(
     overview,
     referrals,
     geo,
-    topPages, // ✅ NEW OUTPUT
+    topPages,
     loading,
     error,
     refetch: fetchAnalytics,

@@ -24,9 +24,9 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
   const { config: sidebarConfig, updateConfig: updateSidebarConfig } = useSidebarConfig()
 
   const [activeTab, setActiveTab] = React.useState("theme")
-  const [selectedTheme, setSelectedTheme] = React.useState("default")
-  const [selectedTweakcnTheme, setSelectedTweakcnTheme] = React.useState("")
-  const [selectedRadius, setSelectedRadius] = React.useState("0.5rem")
+  const [selectedTheme, setSelectedTheme] = React.useState("")
+  const [selectedTweakcnTheme, setSelectedTweakcnTheme] = React.useState("twitter")
+  const [selectedRadius, setSelectedRadius] = React.useState("1.3rem")
   const [importModalOpen, setImportModalOpen] = React.useState(false)
   const [importedTheme, setImportedTheme] = React.useState<ImportedTheme | null>(null)
 
@@ -34,9 +34,9 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
     // Complete reset to application defaults
 
     // 1. Reset all state variables to initial values
-    setSelectedTheme("default")
-    setSelectedTweakcnTheme("")
-    setSelectedRadius("0.5rem")
+    setSelectedTheme("")
+    setSelectedTweakcnTheme("twitter")
+    setSelectedRadius("1.3rem")
     setImportedTheme(null) // Clear imported theme
     setBrandColorsValues({}) // Clear brand colors state
 
@@ -44,9 +44,15 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
     resetTheme()
 
     // 3. Reset the radius to default
-    applyRadius("0.5rem")
+    applyRadius("1.3rem")
 
-    // 4. Reset sidebar to defaults
+    // 4. Apply Twitter theme as default
+    const twitterPreset = tweakcnThemes.find(t => t.value === "twitter")?.preset
+    if (twitterPreset) {
+      applyTweakcnTheme(twitterPreset, isDarkMode)
+    }
+
+    // 5. Reset sidebar to defaults
     updateSidebarConfig({ variant: "inset", collapsible: "offcanvas", side: "left" })
   }
 

@@ -1,11 +1,8 @@
 "use client"
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAnalyticsContext } from "@/contexts/analytics-context"
-import { Link2 } from "lucide-react"
 
 function cleanReferrer(url: string) {
   try {
@@ -47,8 +44,6 @@ export function ReferrersCard() {
   }
 
   const topFive = referrals.slice(0, 5)
-
-  // 🔥 Compute total visits so percentage is correct
   const total = referrals.reduce((sum, r) => sum + (r.count || 0), 0)
 
   return (
@@ -69,34 +64,35 @@ export function ReferrersCard() {
               key={index}
               className="flex items-center p-3 rounded-lg border gap-2"
             >
-              {/* Rank badge */}
+              {/* Rank bubble */}
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
                 #{index + 1}
               </div>
 
-              <div className="flex gap-2 items-center justify-between flex-1 flex-wrap">
+              <div className="flex gap-4 items-center justify-between flex-1 flex-wrap">
+                {/* Referrer info */}
                 <div>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-sm font-medium truncate max-w-[200px]">
-                      {cleanReferrer(item.referrer)}
-                    </p>
-
-                    {/* <Badge variant="outline" className="text-xs flex items-center gap-1">
-                      <Link2 className="w-3 h-3" />
-                      Referrer
-                    </Badge> */}
-                  </div>
-
+                  <p className="text-sm font-medium truncate max-w-[200px]">
+                    {cleanReferrer(item.referrer)}
+                  </p>
                   <span className="text-xs text-muted-foreground">
                     {item.count} visits
                   </span>
                 </div>
 
-                {/* Percentage + Progress */}
-                <div className="text-right space-y-1">
-                  <Progress value={pct} className="w-20 h-1" />
-                  <span className="text-xs text-muted-foreground">
-                    {pct.toFixed(1)}% of traffic
+                {/* Upgraded Percentage Bar */}
+                <div className="flex items-center gap-3 min-w-[140px]">
+                  <div className="flex-1">
+                    <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500 ease-out"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <span className="text-xs text-muted-foreground w-12 text-right">
+                    {pct.toFixed(1)}%
                   </span>
                 </div>
               </div>
