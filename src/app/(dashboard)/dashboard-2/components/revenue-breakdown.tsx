@@ -127,7 +127,7 @@ export function RevenueBreakdown() {
           <CardDescription>See what devices your visitors are using</CardDescription>
         </div>
         <div className="flex items-center space-x-2">
-          <Select value={activeCategory} onValueChange={setActiveCategory}>
+          {/* <Select value={activeCategory} onValueChange={setActiveCategory}>
             <SelectTrigger className="w-[175px] rounded-lg">
               <SelectValue />
             </SelectTrigger>
@@ -144,7 +144,7 @@ export function RevenueBreakdown() {
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select> */}
           <Button variant="outline">Export</Button>
         </div>
       </CardHeader>

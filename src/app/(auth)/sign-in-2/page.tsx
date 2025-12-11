@@ -26,7 +26,7 @@ export default function LoginPage() {
       </div>
       <div className="bg-muted relative hidden lg:block">
         <Image
-          src={logo_gradient}
+          src={sign}
           alt="Image"
           fill
           className="object-cover dark:brightness-[0.95]"

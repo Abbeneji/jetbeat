@@ -149,57 +149,58 @@ export function GeoVisitorsMap() {
             style={{ width: "100%", height: "100%" }}
           >
             <ZoomableGroup zoom={zoom} center={[10, 30]}>
-              <Geographies geography="/world-110m.json">
-                {({ geographies }) =>
-                  geographies.map((geo) => {
-                    const numericId = geo.id;
-                    const alpha2 = Object.keys(ISO_ALPHA2_TO_NUMERIC).find(
-                      (k) => ISO_ALPHA2_TO_NUMERIC[k] === numericId
-                    );
-                    const visitors = totalsByNumericId[numericId] ?? 0;
+            <Geographies geography="/world-110m.json">
+  {({ geographies }) =>
+    geographies
+      .filter((geo) => geo.id !== "010") // ❌ Remove Antarctica
+      .map((geo) => {
+        const numericId = geo.id;
+        const alpha2 = Object.keys(ISO_ALPHA2_TO_NUMERIC).find(
+          (k) => ISO_ALPHA2_TO_NUMERIC[k] === numericId
+        );
+        const visitors = totalsByNumericId[numericId] ?? 0;
 
-                    return (
-                      <Geography
-                        key={geo.rsmKey}
-                        geography={geo}
-                        onMouseMove={(event) => {
-                          if (!alpha2 || !mapContainerRef.current) return;
+        return (
+          <Geography
+            key={geo.rsmKey}
+            geography={geo}
+            onMouseMove={(event) => {
+              if (!alpha2 || !mapContainerRef.current) return;
 
-                          const rect =
-                            mapContainerRef.current.getBoundingClientRect();
-                          const x = event.clientX - rect.left;
-                          const y = event.clientY - rect.top;
+              const rect = mapContainerRef.current.getBoundingClientRect();
+              const x = event.clientX - rect.left;
+              const y = event.clientY - rect.top;
 
-                          setTooltip({
-                            x: x + 10,
-                            y: y + 10,
-                            country: COUNTRY_LABELS[alpha2] ?? alpha2,
-                            visitors,
-                          });
-                        }}
-                        onMouseLeave={() => setTooltip(null)}
-                        style={{
-                          default: {
-                            fill: fillFor(numericId),
-                            stroke: "#ffffff22",
-                            strokeWidth: 0.6,
-                          },
-                          hover: {
-                            fill: "#38bdf8",
-                            stroke: "#ffffff",
-                            strokeWidth: 1.0,
-                          },
-                          pressed: {
-                            fill: "#0ea5e9",
-                            stroke: "#ffffff",
-                            strokeWidth: 1.0,
-                          },
-                        }}
-                      />
-                    );
-                  })
-                }
-              </Geographies>
+              setTooltip({
+                x: x + 10,
+                y: y + 10,
+                country: COUNTRY_LABELS[alpha2] ?? alpha2,
+                visitors,
+              });
+            }}
+            onMouseLeave={() => setTooltip(null)}
+            style={{
+              default: {
+                fill: fillFor(numericId),
+                stroke: "#ffffff22",
+                strokeWidth: 0.6,
+              },
+              hover: {
+                fill: "#38bdf8",
+                stroke: "#ffffff",
+                strokeWidth: 1.0,
+              },
+              pressed: {
+                fill: "#0ea5e9",
+                stroke: "#ffffff",
+                strokeWidth: 1.0,
+              },
+            }}
+          />
+        );
+      })
+  }
+</Geographies>
             </ZoomableGroup>
           </ComposableMap>
         </div>

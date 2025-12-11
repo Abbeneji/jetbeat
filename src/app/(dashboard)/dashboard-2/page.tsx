@@ -129,13 +129,13 @@ function DashboardShell() {
           <SalesChart />
           <RevenueBreakdown />
         </div>
-
+        <GeoVisitorsMap />
         <div className="grid gap-6 grid-cols-1 @5xl:grid-cols-2">
           <ReferrersCard />
           <TopPages />
         </div>
 
-        <GeoVisitorsMap />
+        
       </div>
     </div>
   )
